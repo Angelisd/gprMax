@@ -73,8 +73,7 @@ def mpl_plot(w, timewindow, dt, iterations, fft=False):
         plt (object): matplotlib plot object.
     """
 
-    time = np.linspace(0, 1, iterations)
-    time *= (iterations * dt)
+    time = np.linspace(0, (iterations - 1) * dt, num=iterations)
     waveform = np.zeros(len(time))
     timeiter = np.nditer(time, flags=['c_index'])
 
@@ -136,7 +135,7 @@ def mpl_plot(w, timewindow, dt, iterations, fft=False):
         ax1.set_xlabel('Time [s]')
         ax1.set_ylabel('Amplitude')
 
-    [ax.grid() for ax in fig.axes]  # Turn on grid
+    [ax.grid(which='both', axis='both', linestyle='-.') for ax in fig.axes]  # Turn on grid
 
     # Save a PDF/PNG of the figure
     # fig.savefig(os.path.dirname(os.path.abspath(__file__)) + os.sep + w.type + '.pdf', dpi=None, format='pdf', bbox_inches='tight', pad_inches=0.1)

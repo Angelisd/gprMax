@@ -21,7 +21,9 @@ import decimal as d
 import inspect
 import sys
 
-from colorama import init, Fore, Style
+from colorama import init
+from colorama import Fore
+from colorama import Style
 init()
 import numpy as np
 from scipy import interpolate
@@ -32,7 +34,6 @@ from gprMax.exceptions import CmdInputError
 from gprMax.exceptions import GeneralError
 from gprMax.utilities import get_host_info
 from gprMax.utilities import human_size
-from gprMax.utilities import memory_usage
 from gprMax.utilities import round_value
 from gprMax.waveforms import Waveform
 
@@ -139,44 +140,32 @@ def process_singlecmds(singlecmds, G):
     if G.messages:
         print('Domain size: {:g} x {:g} x {:g}m ({:d} x {:d} x {:d} = {:g} cells)'.format(tmp[0], tmp[1], tmp[2], G.nx, G.ny, G.nz, (G.nx * G.ny * G.nz)))
 
-    # Estimate memory (RAM) usage
-    memestimate = memory_usage(G)
-    # Check if model can be built and/or run on host
-    if memestimate > G.hostinfo['ram']:
-        raise GeneralError('Estimated memory (RAM) required ~{} exceeds {} detected!\n'.format(human_size(memestimate), human_size(hostinfo['ram'], a_kilobyte_is_1024_bytes=True)))
-
-    # Check if model can be run on specified GPU if required
-    if G.gpu is not None:
-        if memestimate > G.gpu.totalmem:
-            raise GeneralError('Estimated memory (RAM) required ~{} exceeds {} detected on specified {} - {} GPU!\n'.format(human_size(memestimate), human_size(G.gpu.totalmem, a_kilobyte_is_1024_bytes=True), G.gpu.deviceID, G.gpu.name))
-    if G.messages:
-        print('Estimated memory (RAM) required: ~{}'.format(human_size(memestimate)))
-
     # Time step CFL limit (either 2D or 3D); switch off appropriate PMLs for 2D
     if G.nx == 1:
         G.dt = 1 / (c * np.sqrt((1 / G.dy) * (1 / G.dy) + (1 / G.dz) * (1 / G.dz)))
-        G.dimension = '2D'
+        G.mode = '2D TMx'
         G.pmlthickness['x0'] = 0
         G.pmlthickness['xmax'] = 0
     elif G.ny == 1:
         G.dt = 1 / (c * np.sqrt((1 / G.dx) * (1 / G.dx) + (1 / G.dz) * (1 / G.dz)))
-        G.dimension = '2D'
+        G.mode = '2D TMy'
         G.pmlthickness['y0'] = 0
         G.pmlthickness['ymax'] = 0
     elif G.nz == 1:
         G.dt = 1 / (c * np.sqrt((1 / G.dx) * (1 / G.dx) + (1 / G.dy) * (1 / G.dy)))
-        G.dimension = '2D'
+        G.mode = '2D TMz'
         G.pmlthickness['z0'] = 0
         G.pmlthickness['zmax'] = 0
     else:
         G.dt = 1 / (c * np.sqrt((1 / G.dx) * (1 / G.dx) + (1 / G.dy) * (1 / G.dy) + (1 / G.dz) * (1 / G.dz)))
-        G.dimension = '3D'
+        G.mode = '3D'
 
     # Round down time step to nearest float with precision one less than hardware maximum. Avoids inadvertently exceeding the CFL due to binary representation of floating point number.
     G.dt = round_value(G.dt, decimalplaces=d.getcontext().prec - 1)
 
     if G.messages:
-        print('Time step (at {} CFL limit): {:g} secs'.format(G.dimension, G.dt))
+        print('Mode: {}'.format(G.mode))
+        print('Time step (at CFL limit): {:g} secs'.format(G.dt))
 
     # Time step stability factor
     cmd = '#time_step_stability_factor'
@@ -198,6 +187,8 @@ def process_singlecmds(singlecmds, G):
     tmp = tmp[0].lower()
 
     # If number of iterations given
+    # The +/- 1 used in calculating the number of iterations is to account for
+    # the fact that the solver (iterations) loop runs from 0 to < G.iterations
     try:
         tmp = int(tmp)
         G.timewindow = (tmp - 1) * G.dt
@@ -207,7 +198,7 @@ def process_singlecmds(singlecmds, G):
         tmp = float(tmp)
         if tmp > 0:
             G.timewindow = tmp
-            G.iterations = round_value((tmp / G.dt)) + 1
+            G.iterations = int(np.ceil(tmp / G.dt)) + 1
         else:
             raise CmdInputError(cmd + ' must have a value greater than zero')
     if G.messages:
@@ -321,3 +312,9 @@ def process_singlecmds(singlecmds, G):
                 print('User waveform {} created using {} and, if required, interpolation parameters (kind: {}, fill value: {}).'.format(w.ID, timestr, kwargs['kind'], kwargs['fill_value']))
 
             G.waveforms.append(w)
+
+    # Set the output directory
+    cmd = '#output_dir'
+    if singlecmds[cmd] is not None:
+        outputdir = singlecmds[cmd]
+        G.outputdirectory = outputdir

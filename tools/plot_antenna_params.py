@@ -44,13 +44,12 @@ def calculate_antenna_params(filename, tltxnumber=1, tlrxnumber=None, rxnumber=N
 
     # Open output file and read some attributes
     f = h5py.File(filename, 'r')
-    dxdydz = f.attrs['dx, dy, dz']
+    dxdydz = f.attrs['dx_dy_dz']
     dt = f.attrs['dt']
     iterations = f.attrs['Iterations']
 
     # Calculate time array and frequency bin spacing
-    time = np.linspace(0, 1, iterations)
-    time *= (iterations * dt)
+    time = np.linspace(0, (iterations - 1) * dt, num=iterations)
     df = 1 / np.amax(time)
 
     print('Time window: {:g} s ({} iterations)'.format(np.amax(time), iterations))
@@ -188,7 +187,7 @@ def mpl_plot(filename, time, freqs, Vinc, Vincp, Iinc, Iincp, Vref, Vrefp, Iref,
     ax.set_xlabel('Time [s]')
     ax.set_ylabel('Voltage [V]')
     ax.set_xlim([0, np.amax(time)])
-    ax.grid()
+    ax.grid(which='both', axis='both', linestyle='-.')
 
     # Plot frequency spectra of incident voltage
     ax = plt.subplot(gs1[0, 1])
@@ -200,7 +199,7 @@ def mpl_plot(filename, time, freqs, Vinc, Vincp, Iinc, Iincp, Vref, Vrefp, Iref,
     ax.set_title('Incident voltage')
     ax.set_xlabel('Frequency [Hz]')
     ax.set_ylabel('Power [dB]')
-    ax.grid()
+    ax.grid(which='both', axis='both', linestyle='-.')
 
     # Plot incident current
     ax = plt.subplot(gs1[1, 0])
@@ -209,7 +208,7 @@ def mpl_plot(filename, time, freqs, Vinc, Vincp, Iinc, Iincp, Vref, Vrefp, Iref,
     ax.set_xlabel('Time [s]')
     ax.set_ylabel('Current [A]')
     ax.set_xlim([0, np.amax(time)])
-    ax.grid()
+    ax.grid(which='both', axis='both', linestyle='-.')
 
     # Plot frequency spectra of incident current
     ax = plt.subplot(gs1[1, 1])
@@ -221,7 +220,7 @@ def mpl_plot(filename, time, freqs, Vinc, Vincp, Iinc, Iincp, Vref, Vrefp, Iref,
     ax.set_title('Incident current')
     ax.set_xlabel('Frequency [Hz]')
     ax.set_ylabel('Power [dB]')
-    ax.grid()
+    ax.grid(which='both', axis='both', linestyle='-.')
 
     # Plot total voltage
     ax = plt.subplot(gs1[2, 0])
@@ -230,7 +229,7 @@ def mpl_plot(filename, time, freqs, Vinc, Vincp, Iinc, Iincp, Vref, Vrefp, Iref,
     ax.set_xlabel('Time [s]')
     ax.set_ylabel('Voltage [V]')
     ax.set_xlim([0, np.amax(time)])
-    ax.grid()
+    ax.grid(which='both', axis='both', linestyle='-.')
 
     # Plot frequency spectra of total voltage
     ax = plt.subplot(gs1[2, 1])
@@ -242,7 +241,7 @@ def mpl_plot(filename, time, freqs, Vinc, Vincp, Iinc, Iincp, Vref, Vrefp, Iref,
     ax.set_title('Total (incident + reflected) voltage')
     ax.set_xlabel('Frequency [Hz]')
     ax.set_ylabel('Power [dB]')
-    ax.grid()
+    ax.grid(which='both', axis='both', linestyle='-.')
 
     # Plot total current
     ax = plt.subplot(gs1[3, 0])
@@ -251,7 +250,7 @@ def mpl_plot(filename, time, freqs, Vinc, Vincp, Iinc, Iincp, Vref, Vrefp, Iref,
     ax.set_xlabel('Time [s]')
     ax.set_ylabel('Current [A]')
     ax.set_xlim([0, np.amax(time)])
-    ax.grid()
+    ax.grid(which='both', axis='both', linestyle='-.')
 
     # Plot frequency spectra of total current
     ax = plt.subplot(gs1[3, 1])
@@ -263,7 +262,7 @@ def mpl_plot(filename, time, freqs, Vinc, Vincp, Iinc, Iincp, Vref, Vrefp, Iref,
     ax.set_title('Total (incident + reflected) current')
     ax.set_xlabel('Frequency [Hz]')
     ax.set_ylabel('Power [dB]')
-    ax.grid()
+    ax.grid(which='both', axis='both', linestyle='-.')
 
     # Plot reflected (reflected) voltage
     # ax = plt.subplot(gs1[4, 0])
@@ -272,7 +271,7 @@ def mpl_plot(filename, time, freqs, Vinc, Vincp, Iinc, Iincp, Vref, Vrefp, Iref,
     # ax.set_xlabel('Time [s]')
     # ax.set_ylabel('Voltage [V]')
     # ax.set_xlim([0, np.amax(time)])
-    # ax.grid()
+    # ax.grid(which='both', axis='both', linestyle='-.')
 
     # Plot frequency spectra of reflected voltage
     # ax = plt.subplot(gs1[4, 1])
@@ -284,7 +283,7 @@ def mpl_plot(filename, time, freqs, Vinc, Vincp, Iinc, Iincp, Vref, Vrefp, Iref,
     # ax.set_title('Reflected voltage')
     # ax.set_xlabel('Frequency [Hz]')
     # ax.set_ylabel('Power [dB]')
-    # ax.grid()
+    # ax.grid(which='both', axis='both', linestyle='-.')
 
     # Plot reflected (reflected) current
     # ax = plt.subplot(gs1[5, 0])
@@ -293,7 +292,7 @@ def mpl_plot(filename, time, freqs, Vinc, Vincp, Iinc, Iincp, Vref, Vrefp, Iref,
     # ax.set_xlabel('Time [s]')
     # ax.set_ylabel('Current [A]')
     # ax.set_xlim([0, np.amax(time)])
-    # ax.grid()
+    # ax.grid(which='both', axis='both', linestyle='-.')
 
     # Plot frequency spectra of reflected current
     # ax = plt.subplot(gs1[5, 1])
@@ -305,7 +304,7 @@ def mpl_plot(filename, time, freqs, Vinc, Vincp, Iinc, Iincp, Vref, Vrefp, Iref,
     # ax.set_title('Reflected current')
     # ax.set_xlabel('Frequency [Hz]')
     # ax.set_ylabel('Power [dB]')
-    # ax.grid()
+    # ax.grid(which='both', axis='both', linestyle='-.')
 
     # Figure 2
     # Plot frequency spectra of s11
@@ -322,7 +321,7 @@ def mpl_plot(filename, time, freqs, Vinc, Vincp, Iinc, Iincp, Vref, Vrefp, Iref,
     ax.set_ylabel('Power [dB]')
     # ax.set_xlim([0, 5e9])
     # ax.set_ylim([-25, 0])
-    ax.grid()
+    ax.grid(which='both', axis='both', linestyle='-.')
 
     # Plot frequency spectra of s21
     if s21 is not None:
@@ -337,7 +336,7 @@ def mpl_plot(filename, time, freqs, Vinc, Vincp, Iinc, Iincp, Vref, Vrefp, Iref,
         ax.set_ylabel('Power [dB]')
         # ax.set_xlim([0.88e9, 1.02e9])
         # ax.set_ylim([-25, 50])
-        ax.grid()
+        ax.grid(which='both', axis='both', linestyle='-.')
 
     # Plot input resistance (real part of impedance)
     ax = plt.subplot(gs2[1, 0])
@@ -352,7 +351,7 @@ def mpl_plot(filename, time, freqs, Vinc, Vincp, Iinc, Iincp, Vref, Vrefp, Iref,
     # ax.set_xlim([0.88e9, 1.02e9])
     ax.set_ylim(bottom=0)
     # ax.set_ylim([0, 300])
-    ax.grid()
+    ax.grid(which='both', axis='both', linestyle='-.')
 
     # Plot input reactance (imaginery part of impedance)
     ax = plt.subplot(gs2[1, 1])
@@ -366,7 +365,7 @@ def mpl_plot(filename, time, freqs, Vinc, Vincp, Iinc, Iincp, Vref, Vrefp, Iref,
     ax.set_ylabel('Reactance [Ohms]')
     # ax.set_xlim([0.88e9, 1.02e9])
     # ax.set_ylim([-300, 300])
-    ax.grid()
+    ax.grid(which='both', axis='both', linestyle='-.')
 
     # Plot input admittance (magnitude)
     # ax = plt.subplot(gs2[2, 0])
@@ -380,7 +379,7 @@ def mpl_plot(filename, time, freqs, Vinc, Vincp, Iinc, Iincp, Vref, Vrefp, Iref,
     # ax.set_ylabel('Admittance [Siemens]')
     # ax.set_xlim([0.88e9, 1.02e9])
     # ax.set_ylim([0, 0.035])
-    # ax.grid()
+    # ax.grid(which='both', axis='both', linestyle='-.')
 
     # Plot input admittance (phase)
     # ax = plt.subplot(gs2[2, 1])
@@ -394,7 +393,7 @@ def mpl_plot(filename, time, freqs, Vinc, Vincp, Iinc, Iincp, Vref, Vrefp, Iref,
     # ax.set_ylabel('Phase [degrees]')
     # ax.set_xlim([0.88e9, 1.02e9])
     # ax.set_ylim([-40, 100])
-    # ax.grid()
+    # ax.grid(which='both', axis='both', linestyle='-.')
 
     # Save a PDF/PNG of the figure
     # fig1.savefig(os.path.splitext(os.path.abspath(filename))[0] + '_tl_params.png', dpi=150, format='png', bbox_inches='tight', pad_inches=0.1)

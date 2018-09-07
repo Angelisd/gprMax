@@ -17,6 +17,7 @@
 # along with gprMax.  If not, see <http://www.gnu.org/licenses/>.
 
 from contextlib import contextmanager
+import codecs
 import decimal as d
 import platform
 import psutil
@@ -98,7 +99,7 @@ def open_path_file(path_or_file):
     """
 
     if isinstance(path_or_file, str):
-        f = file_to_close = open(path_or_file, 'r')
+        f = file_to_close = codecs.open(path_or_file, 'r', encoding='utf-8')
     else:
         f = path_or_file
         file_to_close = None
@@ -392,53 +393,3 @@ def detect_gpus():
     print('GPU(s) detected: {}'.format(' | '.join(gputext)))
 
     return gpus
-
-
-def memory_usage(G):
-    """Estimate the amount of memory (RAM) required to run a model.
-
-    Args:
-        G (class): Grid class instance - holds essential parameters describing the model.
-
-    Returns:
-        memestimate (int): Estimate of required memory in bytes
-    """
-
-    stdoverhead = 50e6
-
-    # 6 x field arrays + 6 x ID arrays
-    fieldarrays = (6 + 6) * (G.nx + 1) * (G.ny + 1) * (G.nz + 1) * np.dtype(floattype).itemsize
-
-    solidarray = G.nx * G.ny * G.nz * np.dtype(np.uint32).itemsize
-
-    # 12 x rigidE array components + 6 x rigidH array components
-    rigidarrays = (12 + 6) * G.nx * G.ny * G.nz * np.dtype(np.int8).itemsize
-
-    # PML arrays
-    pmlarrays = 0
-    for (k, v) in G.pmlthickness.items():
-        if v > 0:
-            if 'x' in k:
-                pmlarrays += ((v + 1) * G.ny * (G.nz + 1))
-                pmlarrays += ((v + 1) * (G.ny + 1) * G.nz)
-                pmlarrays += (v * G.ny * (G.nz + 1))
-                pmlarrays += (v * (G.ny + 1) * G.nz)
-            elif 'y' in k:
-                pmlarrays += (G.nx * (v + 1) * (G.nz + 1))
-                pmlarrays += ((G.nx + 1) * (v + 1) * G.nz)
-                pmlarrays += ((G.nx + 1) * v * G.nz)
-                pmlarrays += (G.nx * v * (G.nz + 1))
-            elif 'z' in k:
-                pmlarrays += (G.nx * (G.ny + 1) * (v + 1))
-                pmlarrays += ((G.nx + 1) * G.ny * (v + 1))
-                pmlarrays += ((G.nx + 1) * G.ny * v)
-                pmlarrays += (G.nx * (G.ny + 1) * v)
-
-    # Any dispersive material coefficients
-    disparrays = 0
-    if Material.maxpoles != 0:
-        disparrays = 3 * Material.maxpoles * (G.nx + 1) * (G.ny + 1) * (G.nz + 1) * np.dtype(complextype).itemsize
-
-    memestimate = int(stdoverhead + fieldarrays + solidarray + rigidarrays + pmlarrays + disparrays)
-
-    return memestimate

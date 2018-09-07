@@ -249,18 +249,10 @@ cpdef void build_face_yz(
     set_rigid_Ez(i, j, k, rigidE)
     set_rigid_Ey(i, j, k + 1, rigidE)
     set_rigid_Ez(i, j + 1, k, rigidE)
-    set_rigid_Hy(i, j, k, rigidH)
-    set_rigid_Hz(i, j, k, rigidH)
-    set_rigid_Hy(i, j, k + 1, rigidH)
-    set_rigid_Hz(i, j + 1, k, rigidH)
     ID[1, i, j, k] = numIDy
     ID[2, i, j, k] = numIDz
     ID[1, i, j, k + 1] = numIDy
     ID[2, i, j + 1, k] = numIDz
-    ID[4, i, j, k] = numIDy
-    ID[5, i, j, k] = numIDz
-    ID[4, i, j, k + 1] = numIDy
-    ID[5, i, j + 1, k] = numIDz
 
 
 cpdef void build_face_xz(
@@ -285,18 +277,10 @@ cpdef void build_face_xz(
     set_rigid_Ez(i, j, k, rigidE)
     set_rigid_Ex(i, j, k + 1, rigidE)
     set_rigid_Ez(i + 1, j, k, rigidE)
-    set_rigid_Hx(i, j, k, rigidH)
-    set_rigid_Hz(i, j, k, rigidH)
-    set_rigid_Hx(i, j, k + 1, rigidH)
-    set_rigid_Hz(i + 1, j, k, rigidH)
     ID[0, i, j, k] = numIDx
     ID[2, i, j, k] = numIDz
     ID[0, i, j, k + 1] = numIDx
     ID[2, i + 1, j, k] = numIDz
-    ID[3, i, j, k] = numIDx
-    ID[5, i, j, k] = numIDz
-    ID[3, i, j, k + 1] = numIDx
-    ID[5, i + 1, j, k] = numIDz
 
 
 cpdef void build_face_xy(
@@ -321,18 +305,10 @@ cpdef void build_face_xy(
     set_rigid_Ey(i, j, k, rigidE)
     set_rigid_Ex(i, j + 1, k, rigidE)
     set_rigid_Ey(i + 1, j, k, rigidE)
-    set_rigid_Hx(i, j, k, rigidH)
-    set_rigid_Hy(i, j, k, rigidH)
-    set_rigid_Hx(i, j + 1, k, rigidH)
-    set_rigid_Hy(i + 1, j, k, rigidH)
     ID[0, i, j, k] = numIDx
     ID[1, i, j, k] = numIDy
     ID[0, i, j + 1, k] = numIDx
     ID[1, i + 1, j, k] = numIDy
-    ID[3, i, j, k] = numIDx
-    ID[4, i, j, k] = numIDy
-    ID[3, i, j + 1, k] = numIDx
-    ID[4, i + 1, j, k] = numIDy
 
 
 cpdef void build_voxel(
@@ -748,28 +724,66 @@ cpdef void build_cylinder(
     cdef Py_ssize_t i, j, k
     cdef int xs, xf, ys, yf, zs, zf, xc, yc, zc
     cdef float f1f2mag, f2f1mag, f1ptmag, f2ptmag, dot1, dot2, factor1, factor2, theta1, theta2, distance1, distance2
-    cdef bint build
+    cdef bint build, x_align, y_align, z_align
     cdef np.ndarray f1f2, f2f1, f1pt, f2pt
+
+    # Check if cylinder is aligned with an axis
+    x_align = y_align = z_align = 0
+    # x-aligned
+    if round_value(y1 / dy) == round_value(y2 / dy) and round_value(z1 / dz) == round_value(z2 / dz):
+        x_align = 1
+
+    # y-aligned
+    elif round_value(x1 / dx) == round_value(x2 / dx) and round_value(z1 / dz) == round_value(z2 / dz):
+        y_align = 1
+
+    # z-aligned
+    elif round_value(x1 / dx) == round_value(x2 / dx) and round_value(y1 / dy) == round_value(y2 / dy):
+        z_align = 1
 
     # Calculate a bounding box for the cylinder
     if x1 < x2:
-        xs = round_value((x1 - r) / dx) - 1
-        xf = round_value((x2 + r) / dx) + 1
+        if x_align:
+            xs = round_value(x1 / dx)
+            xf = round_value(x2 / dx)
+        else:
+            xs = round_value((x1 - r) / dx) - 1
+            xf = round_value((x2 + r) / dx) + 1
     else:
-        xs = round_value((x2 - r) / dx) - 1
-        xf = round_value((x1 + r) / dx) + 1
+        if x_align:
+            xs = round_value(x2 / dx)
+            xf = round_value(x1 / dx)
+        else:
+            xs = round_value((x2 - r) / dx) - 1
+            xf = round_value((x1 + r) / dx) + 1
     if y1 < y2:
-        ys = round_value((y1 - r) / dy) - 1
-        yf = round_value((y2 + r) / dy) + 1
+        if y_align:
+            ys = round_value(y1 / dy)
+            yf = round_value(y2 / dy)
+        else:
+            ys = round_value((y1 - r) / dy) - 1
+            yf = round_value((y2 + r) / dy) + 1
     else:
-        ys = round_value((y2 - r) / dy) - 1
-        yf = round_value((y1 + r) / dy) + 1
+        if y_align:
+            ys = round_value(y2 / dy)
+            yf = round_value(y1 / dy)
+        else:
+            ys = round_value((y2 - r) / dy) - 1
+            yf = round_value((y1 + r) / dy) + 1
     if z1 < z2:
-        zs = round_value((z1 - r) / dz) - 1
-        zf = round_value((z2 + r) / dz) + 1
+        if z_align:
+            zs = round_value(z1 / dz)
+            zf = round_value(z2 / dz)
+        else:
+            zs = round_value((z1 - r) / dz) - 1
+            zf = round_value((z2 + r) / dz) + 1
     else:
-        zs = round_value((z2 - r) / dz) - 1
-        zf = round_value((z1 + r) / dz) + 1
+        if z_align:
+            zs = round_value(z2 / dz)
+            zf = round_value(z1 / dz)
+        else:
+            zs = round_value((z2 - r) / dz) - 1
+            zf = round_value((z1 + r) / dz) + 1
 
     # Set bounds to domain if they outside
     if xs < 0:
@@ -785,23 +799,22 @@ cpdef void build_cylinder(
     if zf > solid.shape[2]:
         zf = solid.shape[2]
 
-    # Check if cylinder is aligned with an axis
-    # x-aligned
-    if round_value(y1 / dy) == round_value(y2 / dy) and round_value(z1 / dz) == round_value(z2 / dz):
+    # x-aligned cylinder
+    if x_align:
         for j in range(ys, yf):
             for k in range(zs, zf):
                 if np.sqrt((j * dy + 0.5 * dy - y1)**2 + (k * dz + 0.5 * dz - z1)**2) <= r:
                     for i in range(xs, xf):
                         build_voxel(i, j, k, numID, numIDx, numIDy, numIDz, averaging, solid, rigidE, rigidH, ID)
-    # y-aligned
-    elif round_value(x1 / dx) == round_value(x2 / dx) and round_value(z1 / dz) == round_value(z2 / dz):
+    # y-aligned cylinder
+    elif y_align:
         for i in range(xs, xf):
             for k in range(zs, zf):
                 if np.sqrt((i * dx + 0.5 * dx - x1)**2 + (k * dz + 0.5 * dz - z1)**2) <= r:
                     for j in range(ys, yf):
                         build_voxel(i, j, k, numID, numIDx, numIDy, numIDz, averaging, solid, rigidE, rigidH, ID)
-    # z-aligned
-    elif round_value(x1 / dx) == round_value(x2 / dx) and round_value(y1 / dy) == round_value(y2 / dy):
+    # z-aligned cylinder
+    elif z_align:
         for i in range(xs, xf):
             for j in range(ys, yf):
                 if np.sqrt((i * dx + 0.5 * dx - x1)**2 + (j * dy + 0.5 * dy - y1)**2) <= r:
